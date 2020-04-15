@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using TaleWorlds.CampaignSystem;
@@ -173,9 +173,15 @@ namespace TellWarStories
 
         private bool game_menu_tellstories_here_on_condition(MenuCallbackArgs args)
         {
+            args.optionLeaveType = GameMenuOption.LeaveType.Recruit;
             return true;
         }
         private void OnSessionLaunched(CampaignGameStarter obj)
+        {
+            AddWarStoryMenu(obj);
+        }
+
+        public void AddWarStoryMenu(CampaignGameStarter obj)
         {
             obj.AddGameMenuOption("village", "village_tellstories", "Tell war stories", game_menu_tellstories_here_on_condition, this.game_menu_tellstories_village_on_consequence, false, 3);
         }
