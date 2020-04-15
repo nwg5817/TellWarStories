@@ -103,21 +103,35 @@ namespace TellWarStories
         {
             if (village._battleStoriesTold < _notableBattlesWon)
             {
-                float _renownToGive = CalculateRenownToGive();
-                GainRenownAction.Apply(Hero.MainHero, _renownToGive, true);               
+                SkillObject skill;
+                int num;
+                skill = SkillObject.FindFirst((x) => { return x.StringId == "Charm"; });
+                num = (int)Math.Ceiling(MobileParty.MainParty.LeaderHero.GetSkillValue(skill) * 0.03f);
+                float _renownToGive = CalculateRenownToGive(num);
+                GainRenownAction.Apply(Hero.MainHero, _renownToGive, true);
+                if ((double)_renownToGive <= 0.2)
+                    {
+                        village._daysToResetStories = CampaignTime.DaysFromNow(this.RandomizeDays());
+                        village._hasToldStories = true;
+                        ++village._battleStoriesTold;
+                        Hero.MainHero.AddSkillXp(DefaultSkills.Charm, 1);
+                        InformationManager.DisplayMessage(new InformationMessage("Your story failed to inspire the villagers."));
+                        return;
+                    }
                 InformationManager.DisplayMessage(new InformationMessage("You told the villagers a story about a notable battle, gained " + _renownToGive + " renown."));
                 village._daysToResetStories = CampaignTime.DaysFromNow(RandomizeDays());
                 village._hasToldStories = true;
                 village._battleStoriesTold++;
                 Hero.MainHero.AddSkillXp(DefaultSkills.Charm, MBRandom.RandomInt(1, 3));
-                if (_renownToGive >= 0.9)
+                if (_renownToGive >= 2.0)
                 {
                     if(Settlement.CurrentSettlement.Notables.Count >= 1)
                     {
                         InformationManager.DisplayMessage(new InformationMessage("Notable people in village were impressed by your feats and like you more."));
                         foreach (Hero notablePerson in Settlement.CurrentSettlement.Notables)
                         {
-                            ChangeRelationAction.ApplyPlayerRelation(notablePerson, +1, false, true);
+                            int _relationToGive = CalculateRelationToGive(_renownToGive);
+                            ChangeRelationAction.ApplyPlayerRelation(notablePerson, _relationToGive, false, true);
                         }
                     }
                 }
@@ -128,12 +142,28 @@ namespace TellWarStories
             }
         }
 
-        private float CalculateRenownToGive()
+        private float CalculateRenownToGive(int num)
         {
-            int _rAmount = MBRandom.RandomInt(1, 10);
-            float _givenAmount = _rAmount * 0.1f;
-            return _givenAmount;
+            int _rAmount = MBRandom.RandomInt(1, 20);
+            InformationManager.DisplayMessage(new InformationMessage("Random Result: " + _rAmount.ToString() + " Charm Skill Bonus: " + num.ToString()));
+            _rAmount += num;
+            InformationManager.DisplayMessage(new InformationMessage("Total Result: " + _rAmount.ToString()));
+
+            return (float)_rAmount * 0.1f;
         }
+
+        private int CalculateRelationToGive(float renown)
+        {
+            InformationManager.DisplayMessage(new InformationMessage("Result for Relation: " + renown.ToString()));
+            if ((double)renown < 3.0)
+                return (int)MBRandom.RandomInt(1, 4);
+            else if ((double)renown < 2.4)
+                return (int)MBRandom.RandomInt(1, 3);
+            else
+                return (int)MBRandom.RandomInt(1, 2);
+
+        }
+
 
         private float RandomizeDays()
         {
